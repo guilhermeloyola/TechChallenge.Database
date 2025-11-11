@@ -23,7 +23,7 @@ jobs:
       TF_IN_AUTOMATION: true
       ENV_PATH: envs/dev
       BACKEND_PATH: backend/dev.backend.tfvars
-
+      TF_VAR_pg_password: ${{ secrets.TF_VAR_pg_password }}
     steps:
       # 1️⃣ Checkout do código
       - name: Checkout
