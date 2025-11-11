@@ -7,4 +7,5 @@ module "database" {
   resource_group_name = "rg-tech-challenge"
   pg_db_name          = "techchallenge"
   pg_password         = var.pg_password
+  allowed_ip          = var.allowed_ip
 }
