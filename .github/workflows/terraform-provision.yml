@@ -1,0 +1,56 @@
+name: 🚀 Provisionar Banco PostgreSQL (manual + IP customizado)
+
+on:
+  workflow_dispatch:
+    inputs:
+      allowed_ip:
+        description: "Endereço IP autorizado a acessar o PostgreSQL (ex: 201.10.22.55)"
+        required: true
+        default: "0.0.0.0"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  terraform:
+    name: "Provisionar Banco (Dev)"
+    runs-on: ubuntu-latest
+
+    env:
+      ARM_USE_OIDC: true
+      ARM_USE_AZUREAD: true
+      TF_IN_AUTOMATION: true
+      ENV_PATH: envs/dev
+      BACKEND_PATH: backend/dev.backend.tfvars
+
+    steps:
+      # 1️⃣ Checkout do código
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2️⃣ Setup do Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+
+      # 3️⃣ Login no Azure via OIDC
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # 4️⃣ Inicializa o Terraform
+      - name: Terraform Init
+        run: terraform -chdir=${{ env.ENV_PATH }} init -backend-config="../../${{ env.BACKEND_PATH }}" -reconfigure
+
+      # 5️⃣ Plano com IP dinâmico
+      - name: Terraform Plan
+        run: terraform -chdir=${{ env.ENV_PATH }} plan -out=plan.out -var="allowed_ip=${{ github.event.inputs.allowed_ip }}"
+
+      # 6️⃣ Aplicação do plano
+      - name: Terraform Apply
+        run: terraform -chdir=${{ env.ENV_PATH }} apply -auto-approve plan.out
