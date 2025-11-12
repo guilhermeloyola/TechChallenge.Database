@@ -2,6 +2,8 @@
 .terraform/
 terraform/
 
+!backend/dev.backend.tfvars
+
 # State files
 *.tfstate
 *.tfstate.*
