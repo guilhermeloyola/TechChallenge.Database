@@ -24,18 +24,19 @@ jobs:
       ENV_PATH: envs/dev
       BACKEND_PATH: backend/dev.backend.tfvars
       TF_VAR_pg_password: ${{ secrets.TF_VAR_pg_password }}
+
     steps:
       # 1️⃣ Checkout do código
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup do Terraform
+      # 2️⃣ Instala Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.0
 
-      # 3️⃣ Login no Azure via OIDC
+      # 3️⃣ Login no Azure (OIDC)
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -43,15 +44,24 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # 4️⃣ Inicializa o Terraform
+      # 4️⃣ Inicializa Terraform com backend remoto
       - name: Terraform Init
-        run: terraform -chdir=${{ env.ENV_PATH }} init -backend-config="../../${{ env.BACKEND_PATH }}" -reconfigure
+        run: |
+          terraform -chdir=${{ env.ENV_PATH }} init \
+            -backend-config="${{ github.workspace }}/${{ env.BACKEND_PATH }}" \
+            -reconfigure
 
-
-      # 5️⃣ Plano com IP dinâmico
+      # 5️⃣ Cria plano com IP dinâmico
       - name: Terraform Plan
-        run: terraform -chdir=${{ env.ENV_PATH }} plan -out=plan.out -var="allowed_ip=${{ github.event.inputs.allowed_ip }}"
+        run: |
+          terraform -chdir=${{ env.ENV_PATH }} plan \
+            -out=plan.out \
+            -var="allowed_ip=${{ github.event.inputs.allowed_ip }}"
 
-      # 6️⃣ Aplicação do plano
+      # 6️⃣ Aplica o plano
       - name: Terraform Apply
         run: terraform -chdir=${{ env.ENV_PATH }} apply -auto-approve plan.out
+
+      # 7️⃣ Exibe os outputs (FQDN, DB, Admin)
+      - name: Terraform Output
+        run: terraform -chdir=${{ env.ENV_PATH }} output -json
