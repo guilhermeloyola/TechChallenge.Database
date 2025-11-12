@@ -47,6 +47,7 @@ jobs:
       - name: Terraform Init
         run: terraform -chdir=${{ env.ENV_PATH }} init -backend-config="../../${{ env.BACKEND_PATH }}" -reconfigure
 
+
       # 5️⃣ Plano com IP dinâmico
       - name: Terraform Plan
         run: terraform -chdir=${{ env.ENV_PATH }} plan -out=plan.out -var="allowed_ip=${{ github.event.inputs.allowed_ip }}"
