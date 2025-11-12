@@ -1,11 +1,5 @@
-resource "random_string" "suffix" {
-  length  = 4
-  upper   = false
-  special = false
-}
-
 resource "azurerm_postgresql_flexible_server" "pg" {
-  name                         = "${var.project_name}-${var.env}-pg-${random_string.suffix.result}"
+  name                         = "${var.project_name}-${var.env}-pg"
   resource_group_name          = var.resource_group_name
   location                     = var.location
   version                      = "16"
